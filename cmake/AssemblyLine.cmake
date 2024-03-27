@@ -28,7 +28,6 @@ if(AL_MERGE_RDATA)
     # Prepend .jmp to .rdata when using MSVC
     if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         set(AL_MERGE_SECTIONS /MERGE:.jmp=.rdata /MERGE:.rdata=.text)
-        set(AL_PATCH_JMP TRUE)
     else()
         set(AL_MERGE_SECTIONS /MERGE:.rdata=.text)
     endif()
@@ -209,13 +208,13 @@ function(_add_pic name)
             ${name}-pe
         POST_BUILD
         COMMAND
-            al::dump "$<TARGET_FILE:${name}-pe>" $<$<BOOL:${AL_PATCH_JMP}>:patch_entry>
+            al::dump "$<TARGET_FILE:${name}-pe>" $<$<CXX_COMPILER_ID:MSVC>:patch_entry>
         BYPRODUCTS
             "${PIC_PATH}"
         WORKING_DIRECTORY
             "$<TARGET_FILE_DIR:${name}-pe>"
         COMMENT
-            "Assembly Line: Dumping .text section of $<TARGET_FILE:${name}-pe> $<$<BOOL:${AL_PATCH_JMP}>:and patching entrypoint>"
+            "Assembly Line: Dumping .text section of $<TARGET_FILE:${name}-pe> $<$<CXX_COMPILER_ID:MSVC>:and patching entrypoint>"
     )
 
     add_library(${name} INTERFACE)
