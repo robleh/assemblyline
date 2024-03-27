@@ -1,0 +1,6 @@
+.vs/
+.vscode/
+build/
+external/
+CMakeUserPresets.json
+TODO.md

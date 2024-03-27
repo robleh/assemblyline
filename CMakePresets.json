@@ -1,0 +1,260 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 26,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "installDir": "C:\\Users\\og\\Desktop",
+      "cacheVariables": {
+        "FETCHCONTENT_BASE_DIR": "${sourceDir}/external",
+        "CMAKE_CXX_STANDARD": "26",
+        "CMAKE_CONFIGURATION_TYPES": "Release;Debug",
+        "CMAKE_DEFAULT_BUILD_TYPE": "Release",
+        "CMAKE_VERBOSE_MAKEFILE": true,
+        "AL_EXAMPLES": "ON",
+        "INSTALL_AL": "ON"
+      }
+    },
+    {
+      "name": "x64",
+      "hidden": true,
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "external"
+      }
+    },
+    {
+      "name": "x86",
+      "hidden": true,
+      "architecture": {
+        "value": "x86",
+        "strategy": "external"
+      },
+      "toolset": {
+        "value": "host=Win32",
+        "strategy": "external"
+      }
+    },
+    {
+      "name": "windows",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_ASM_MASM_COMPILER": "ml64.exe"
+      },
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "hostOS": [ "Windows" ]
+        }
+      }
+    },
+    {
+      "name": "cl",
+      "hidden": true,
+      "inherits": [ "base", "windows" ],
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "cl.exe"
+      }
+    },
+    {
+      "name": "windows-x64-msvc",
+      "inherits": [ "x64", "cl" ]
+    },
+    {
+      "name": "clang",
+      "hidden": true,
+      "inherits": [ "base" ],
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang-cl",
+        "CMAKE_CXX_LINK_EXECUTABLE": "lld-link"
+      }
+    },
+    {
+      "name": "windows-x64-clang",
+      "inherits": [ "windows", "x64", "clang" ],
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "intelliSenseMode": "windows-clang-x64"
+        }
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-x64-msvc-release",
+      "displayName": "x64 MSVC Release",
+      "description": "Build the release configuration of Assembly Line using MSVC",
+      "configurePreset": "windows-x64-msvc",
+      "configuration": "Release",
+      "inheritConfigureEnvironment": true,
+      "targets": [
+        "al",
+        "al-dump",
+        "al-test"
+      ]
+    },
+    {
+      "name": "windows-x64-msvc-debug",
+      "displayName": "x64 MSVC Debug",
+      "description": "Build the debug configuration of Assembly Line using MSVC",
+      "inherits": "windows-x64-msvc-release",
+      "configuration": "Debug"
+    },
+    {
+      "name": "install-windows-x64-msvc-release",
+      "displayName": "Install x64 MSVC Release",
+      "description": "Install the MSVC release configuration of Assembly Line",
+      "inherits": "windows-x64-msvc-release",
+      "targets": "install"
+    },
+    {
+      "name": "install-windows-x64-msvc-debug",
+      "displayName": "Install x64 MSVC Debug",
+      "description": "Install the MSVC debug configuration of Assembly Line",
+      "inherits": "windows-x64-msvc-debug",
+      "targets": "install"
+    },
+    {
+      "name": "windows-x64-clang-release",
+      "displayName": "x64 Clang Release",
+      "description": "Build the release configuration of Assembly Line using Clang",
+      "configurePreset": "windows-x64-clang",
+      "configuration": "Release",
+      "inheritConfigureEnvironment": true,
+      "targets": [
+        "al",
+        "al-dump",
+        "al-test"
+      ]
+    },
+    {
+      "name": "windows-x64-clang-debug",
+      "displayName": "x64 Clang Debug",
+      "description": "Build the debug configuration of Assembly Line using Clang",
+      "inherits": "windows-x64-clang-release",
+      "configuration": "Debug"
+    },
+    {
+      "name": "install-windows-x64-clang-release",
+      "displayName": "Install x64 Clang Release",
+      "description": "Install the Clang release configuration of Assembly Line",
+      "inherits": "windows-x64-clang-release",
+      "targets": "install"
+    },
+    {
+      "name": "install-windows-x64-clang-debug",
+      "displayName": "Install x64 Clang Debug",
+      "description": "Install the Clang debug configuration of Assembly Line",
+      "inherits": "windows-x64-clang-debug",
+      "targets": "install"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "windows-x64-msvc-release",
+      "description": "Test the release configuration of Assembly Line using MSVC",
+      "configurePreset": "windows-x64-msvc",
+      "configuration": "Release",
+      "inheritConfigureEnvironment": true
+    },
+    {
+      "name": "windows-x64-msvc-debug",
+      "description": "Test the debug configuration of Assembly Line using MSVC",
+      "inherits": "windows-x64-msvc-release",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-x64-clang-release",
+      "description": "Test the release configuration of Assembly Line using Clang",
+      "configurePreset": "windows-x64-clang",
+      "configuration": "Release",
+      "inheritConfigureEnvironment": true
+    },
+    {
+      "name": "windows-x64-clang-debug",
+      "description": "Test the debug configuration of Assembly Line using Clang",
+      "inherits": "windows-x64-clang-release",
+      "configuration": "Debug"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "windows-x64-msvc",
+      "description": "Build, test, and install Assembly Line using MSVC",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "windows-x64-msvc"
+        },
+        {
+          "type": "build",
+          "name": "windows-x64-msvc-release"
+        },
+        {
+          "type": "build",
+          "name": "windows-x64-msvc-debug"
+        },
+        {
+          "type": "test",
+          "name": "windows-x64-msvc-release"
+        },
+        {
+          "type": "test",
+          "name": "windows-x64-msvc-debug"
+        },
+        {
+          "type": "build",
+          "name": "install-windows-x64-msvc-release"
+        },
+        {
+          "type": "build",
+          "name": "install-windows-x64-msvc-debug"
+        }
+      ]
+    },
+    {
+      "name": "windows-x64-clang",
+      "description": "Build, test, and install Assembly Line using Clang",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "windows-x64-clang"
+        },
+        {
+          "type": "build",
+          "name": "windows-x64-clang-release"
+        },
+        {
+          "type": "build",
+          "name": "windows-x64-clang-debug"
+        },
+        {
+          "type": "test",
+          "name": "windows-x64-clang-release"
+        },
+        {
+          "type": "test",
+          "name": "windows-x64-clang-debug"
+        },
+        {
+          "type": "build",
+          "name": "install-windows-x64-clang-release"
+        },
+        {
+          "type": "build",
+          "name": "install-windows-x64-clang-debug"
+        }
+      ]
+    }
+  ]
+}
