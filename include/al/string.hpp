@@ -31,7 +31,7 @@ struct buffer {
     }
 
     constexpr void wipe() noexcept {
-        ::RtlSecureZeroMemory(&m_buf, N);
+        RtlSecureZeroMemory(&m_buf, N);
     }
 };
 
