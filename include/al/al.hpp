@@ -3,7 +3,6 @@
 #pragma once
 #include "import.hpp"
 #include "intrinsic.hpp"
-#include "string.hpp"
 
 // MSVC prepends .rdata to .text when merging them. .jmp is a placeholder for
 // the jmp instruction that the al-tool patches in before dumping the PIC. It

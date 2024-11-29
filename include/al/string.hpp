@@ -3,6 +3,7 @@
 #include "prng.hpp"
 #include <algorithm>
 #include <string_view>
+#include <phnt.h>
 
 namespace al {
 

@@ -5,8 +5,6 @@
 #include "string.hpp"
 #include "peb.hpp"
 #include "pe.hpp"
-#include <string_view>
-#include <phnt.h>
 
 // Get a module handle using custom search criteria. Module names are expected
 // to be wide strings, and this macro will add the _stack suffix.
