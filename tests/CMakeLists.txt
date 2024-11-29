@@ -30,7 +30,7 @@ target_sources(
         BASE_DIRS
             ${PROJECT_SOURCE_DIR}/include
         FILES
-            ${PROJECT_SOURCE_DIR}/include/al/gtest/test.hpp
+            ${PROJECT_SOURCE_DIR}/include/al/gtest/pic.hpp
 )
 
 add_executable(al-test)
