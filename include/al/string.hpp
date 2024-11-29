@@ -15,6 +15,10 @@ struct buffer {
         std::copy_n(str, N, m_buf);
     }
 
+    constexpr operator Ch*() const noexcept {
+        return m_buf;
+    }
+
     constexpr operator const Ch*() const noexcept {
         return m_buf;
     }
@@ -53,6 +57,11 @@ struct xor_decoder {
             c ^= stream;
             stream = al::prng(stream);
         }
+    }
+
+    operator Ch*() noexcept {
+        xor_();
+        return m_buf;
     }
 
     operator const Ch*() noexcept {
