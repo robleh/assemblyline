@@ -3,7 +3,6 @@
 #include "prng.hpp"
 #include <algorithm>
 #include <string_view>
-#include <phnt.h>
 
 namespace al {
 
@@ -58,7 +57,7 @@ struct xor_decoder {
             stream = al::prng(stream);
         }
     }
-
+    
     operator Ch*() noexcept {
         xor_();
         return m_buf;
@@ -84,7 +83,7 @@ struct xor_decoder {
     }
 
     void wipe() noexcept {
-        ::RtlSecureZeroMemory(&m_buf, N * sizeof(Ch));
+        RtlSecureZeroMemory(&m_buf, N * sizeof(Ch));
     }
 
     ~xor_decoder() {
