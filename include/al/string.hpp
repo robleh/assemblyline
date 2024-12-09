@@ -35,7 +35,11 @@ struct buffer {
     }
 
     constexpr void wipe() noexcept {
+#if defined(_MSC_VER) && !defined(__clang__)
+        ::RtlSecureZeroMemory(&m_buf, N);
+#else
         RtlSecureZeroMemory(&m_buf, N);
+#endif
     }
 };
 
@@ -83,7 +87,11 @@ struct xor_decoder {
     }
 
     void wipe() noexcept {
-        RtlSecureZeroMemory(&m_buf, N * sizeof(Ch));
+#if defined(_MSC_VER) && !defined(__clang__)
+        ::RtlSecureZeroMemory(&m_buf, N);
+#else
+        RtlSecureZeroMemory(&m_buf, N);
+#endif
     }
 
     ~xor_decoder() {
