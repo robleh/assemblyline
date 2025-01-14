@@ -182,7 +182,7 @@ function(_add_pic name)
     target_sources(
         ${name}-pe
         PRIVATE
-            ${PIC_SOURCES}
+            ${PIC_UNPARSED_ARGUMENTS}
         PUBLIC
             FILE_SET
                 ${name}_header
