@@ -1,6 +1,3 @@
-add_pic(messagebox entry.cpp messagebox.hpp)
+add_pic_executable(messagebox entry.cpp)
+add_pic_test(messagebox messagebox_test.cpp)
 
-if (AL_TESTS)
-    target_link_libraries(al-test PRIVATE messagebox)
-    target_sources(al-test PRIVATE messagebox_test.cpp)
-endif()

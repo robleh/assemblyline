@@ -1,4 +1,3 @@
-#include <Windows.h>
 #include <format>
 #include <iostream>
 #include <filesystem>
@@ -7,8 +6,9 @@
 #include <string_view>
 #include <span>
 #include <bit>
+#include <Windows.h>
 
-std::vector<std::byte> read_file(const std::filesystem::path& path) {
+std::vector<std::byte> aread_file(const std::filesystem::path& path) {
     std::basic_ifstream<std::byte> file{ path, std::ios::binary };
 
     // ~basic_ifstream() closes the file handle
@@ -18,25 +18,7 @@ std::vector<std::byte> read_file(const std::filesystem::path& path) {
     };
 }
 
-void write_file(
-    std::span<std::byte> content,
-    const std::filesystem::path& path
-) {
-    std::basic_ofstream<std::byte> outfile{ path, std::ios::binary };
-
-    try {
-        outfile.write(content.data(), content.size_bytes());
-    }
-    catch(const std::exception& e) {
-        std::cerr << std::format(
-            "Failed to dump section to output file: {}",
-            e.what()
-        );
-        exit(EXIT_FAILURE);
-    }
-}
-
-auto get_text_section(std::span<std::byte> file) {
+auto get_pic_section(std::span<std::byte> file) {
     auto base = reinterpret_cast<uintptr_t>(file.data());
     auto dos  = reinterpret_cast<PIMAGE_DOS_HEADER>(file.data());
 
@@ -49,9 +31,9 @@ auto get_text_section(std::span<std::byte> file) {
     auto header = IMAGE_FIRST_SECTION(nt);
     auto end = header + nt->FileHeader.NumberOfSections;
 
-    while (0 != strcmp(".text", reinterpret_cast<char*>(header->Name))) {
+    while (0 != strcmp(".pic", reinterpret_cast<char*>(header->Name))) {
         if (header == end) {
-            std::wcerr << std::format(L"PE does not have a .text section\n");
+            std::wcerr << std::format(L"PE does not have a .pic section\n");
             exit(EXIT_FAILURE);
         }
         header++;
@@ -89,45 +71,58 @@ std::ptrdiff_t calculate_offset(
 
 uint64_t encode_jmp(uint32_t offset) {
     // 0xE9 is the jmp opcode
-    // 0x5 is the length of a jmp instruction
     // Offset is little-endian encoded
-    return 0xE900000000 + std::byteswap(offset - 0x5);
+    // We are including the length of the jmp instruction since we've prepended to PIC
+    return 0xE900000000 + std::byteswap(offset);
 }
 
-void patch_text_section(std::span<std::byte> text, uint64_t instruction) {
-    // Copying one byte at a time so we need to reverse endianness 
-    instruction = std::byteswap(instruction << 24);
-    std::copy_n(reinterpret_cast<std::byte*>(&instruction), 5, text.data());
-}
-
-
-int wmain(int argc, wchar_t* argv[]) {
+int main(int argc, char* argv[]) {
     if (2 > argc) {
-        std::wcerr << std::format(L"Usage: {} <pe_filepath> [patch_entrypoint]", argv[0]);
+        std::cerr << std::format("Usage: {} <pe_filepath> [patch_entrypoint]", argv[0]);
         return EXIT_FAILURE;
     }
 
     auto input = std::filesystem::absolute(argv[1]);
-    auto pe = read_file(std::filesystem::absolute(input));
-    auto [text, virtual_offset] = get_text_section(pe);
+    auto pe = aread_file(input);
+    auto [pic, virtual_offset] = get_pic_section(pe);
+    auto output = input.replace_extension(input.extension().string() + ".pic");
+
+    std::basic_ofstream<std::byte> outfile{ output, std::ios::binary };
 
     if (3 == argc) {
         auto instruction = encode_jmp(calculate_offset(
             pe,
-            text,
+            pic,
             virtual_offset
         ));
 
-        std::wcout << std::format(
-            L"Assembly Line: al::dump is patching .text with jmp to entrypoint (0x{:x})\n",
+        std::cout << std::format(
+            "Assembly Line: al::dump is patching .text with jmp to entrypoint (0x{:x})\n",
             instruction
         );
-        patch_text_section(text, instruction);
-        write_file(pe, input);
+        instruction = std::byteswap(instruction << 24);
+
+        try {
+            outfile.write(reinterpret_cast<std::byte*>(&instruction), 5);
+        }
+        catch(const std::exception& e) {
+            std::cerr << std::format(
+                "Failed to write jmp instruction to PIC file: {}",
+                e.what()
+            );
+            exit(EXIT_FAILURE);
+        }
     }
 
-    input.replace_extension(".bin");
-    write_file(text, input);
-
+    try {
+        outfile.write(pic.data(), pic.size_bytes());
+    }
+    catch(const std::exception& e) {
+        std::cerr << std::format(
+            "Failed to dump PIC section to output file: {}",
+            e.what()
+        );
+        exit(EXIT_FAILURE);
+    }
     return EXIT_SUCCESS;
 }

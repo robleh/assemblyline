@@ -1,37 +1,23 @@
 ##############################################################################
 # Assembly Line
 ##############################################################################
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.29)
 
 project(
     al
     VERSION
         0.0.1
     LANGUAGES
-        CXX ASM_MASM
+        C CXX ASM_MASM
     DESCRIPTION
         "Assembly Line: C++ to Windows Position Independent Code"
     HOMEPAGE_URL
         "https://github.com/robleh/assemblyline"
 )
 
-##############################################################################
-# External
-##############################################################################
-include(FetchContent)
-
-# mrexodia/phnt-single-header
-set(phnt_TAG "v1.2-4d1b102f")
-message(STATUS "Assembly Line: Fetching phnt (${phnt_TAG})...")
-
-FetchContent_Declare(
-    phnt
-    URL
-        "https://github.com/mrexodia/phnt-single-header/releases/download/${phnt_TAG}/phnt.zip"
-    URL_HASH
-        "SHA256=ac86517816cec0a38ba7ff1fff49735ce143b45542118376d71c522fdb75c0c7"
-)
-FetchContent_MakeAvailable(phnt)
+if (AL_C)
+    enable_language(C)
+endif()
 
 ##############################################################################
 # Source
@@ -46,7 +32,8 @@ set(CMAKE_INSTALL_SYSCONFDIR ${AL_PACKAGE_DIR}/${CMAKE_INSTALL_SYSCONFDIR})
 set(CMAKE_INSTALL_LIBDIR ${AL_PACKAGE_DIR}/${CMAKE_INSTALL_LIBDIR}/$<CONFIG>)
 set(CMAKE_INSTALL_INCLUDEDIR ${AL_PACKAGE_DIR}/${CMAKE_INSTALL_INCLUDEDIR})
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+include(FetchContent)
 include(AssemblyLine)
 
 if (AL_TESTS)
@@ -57,10 +44,7 @@ endif()
 
 add_subdirectory("tools")
 add_subdirectory("src")
-
-if (AL_EXAMPLES AND PROJECT_IS_TOP_LEVEL)
-    add_subdirectory("examples")
-endif()
+add_subdirectory("examples")
 
 ##############################################################################
 # Installation

@@ -1,8 +1,8 @@
 {
-  "version": 6,
+  "version": 8,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 28,
+    "minor": 29,
     "patch": 0
   },
   "configurePresets": [
@@ -11,13 +11,15 @@
       "hidden": true,
       "generator": "Ninja Multi-Config",
       "binaryDir": "${sourceDir}/build/${presetName}",
+      "installDir": "C:\\users\\og\\Desktop",
       "cacheVariables": {
         "FETCHCONTENT_BASE_DIR": "${sourceDir}/external",
         "CMAKE_CXX_STANDARD": "26",
         "CMAKE_CONFIGURATION_TYPES": "Release;Debug",
         "CMAKE_DEFAULT_BUILD_TYPE": "Release",
         "CMAKE_VERBOSE_MAKEFILE": true,
-        "AL_EXAMPLES": "ON",
+        "CMAKE_MESSAGE_LOG_LEVEL": "VERBOSE",
+        "AL_EXAMPLES":  "ON",
         "INSTALL_AL": "ON"
       }
     },
@@ -48,9 +50,6 @@
     {
       "name": "windows",
       "hidden": true,
-      "cacheVariables": {
-        "CMAKE_ASM_MASM_COMPILER": "ml64.exe"
-      },
       "vendor": {
         "microsoft.com/VisualStudioSettings/CMake/1.0": {
           "hostOS": [ "Windows" ]
@@ -62,7 +61,9 @@
       "hidden": true,
       "inherits": [ "base", "windows" ],
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "cl.exe"
+        "CMAKE_C_COMPILER": "cl.exe",
+        "CMAKE_CXX_COMPILER": "cl.exe",
+        "CMAKE_ASM_MASM_COMPILER": "ml64.exe"
       }
     },
     {
@@ -74,8 +75,9 @@
       "hidden": true,
       "inherits": [ "base" ],
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "clang-cl",
-        "CMAKE_CXX_LINK_EXECUTABLE": "lld-link"
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_ASM_MASM_COMPILER": "ml64.exe"
       }
     },
     {
@@ -84,6 +86,27 @@
       "vendor": {
         "microsoft.com/VisualStudioSettings/CMake/1.0": {
           "intelliSenseMode": "windows-clang-x64"
+        }
+      }
+    },
+    {
+      "name": "gcc",
+      "hidden": true,
+      "inherits": [ "base" ],
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_CXX_LINK_EXECUTABLE": "ld",
+        "CMAKE_ASM_MASM_COMPILER": "uasm"
+      }
+    },
+    {
+      "name": "windows-x64-gcc",
+      "hidden": true,
+      "inherits": [ "x64", "gcc" ],
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "intelliSenseMode": "linux-gcc-x64"
         }
       }
     }
@@ -156,6 +179,44 @@
       "description": "Install the Clang debug configuration of Assembly Line",
       "inherits": "windows-x64-clang-debug",
       "targets": "install"
+    },
+    {
+      "name": "windows-x64-gcc-release",
+      "hidden": true,
+      "displayName": "x64 GCC Release",
+      "description": "Build the release configuration of Assembly Line using GCC",
+      "configurePreset": "windows-x64-gcc",
+      "configuration": "Release",
+      "inheritConfigureEnvironment": true,
+      "targets": [
+        "al",
+        "al-dump",
+        "al-test"
+      ]
+    },
+    {
+      "name": "windows-x64-gcc-debug",
+      "hidden": true,
+      "displayName": "x64 GCC Debug",
+      "description": "Build the debug configuration of Assembly Line using GCC",
+      "inherits": "windows-x64-gcc-release",
+      "configuration": "Debug"
+    },
+    {
+      "name": "install-windows-x64-gcc-release",
+      "hidden": true,
+      "displayName": "Install x64 GCC Release",
+      "description": "Install the GCC release configuration of Assembly Line",
+      "inherits": "windows-x64-gcc-release",
+      "targets": "install"
+    },
+    {
+      "name": "install-windows-x64-gcc-debug",
+      "hidden": true,
+      "displayName": "Install x64 GCC Debug",
+      "description": "Install the GCC debug configuration of Assembly Line",
+      "inherits": "windows-x64-gcc-debug",
+      "targets": "install"
     }
   ],
   "testPresets": [
@@ -183,6 +244,21 @@
       "name": "windows-x64-clang-debug",
       "description": "Test the debug configuration of Assembly Line using Clang",
       "inherits": "windows-x64-clang-release",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-x64-gcc-release",
+      "hidden": true,
+      "description": "Test the release configuration of Assembly Line using GCC",
+      "configurePreset": "windows-x64-gcc",
+      "configuration": "Release",
+      "inheritConfigureEnvironment": true
+    },
+    {
+      "name": "windows-x64-gcc-debug",
+      "hidden": true,
+      "description": "Test the debug configuration of Assembly Line using GCC",
+      "inherits": "windows-x64-gcc-release",
       "configuration": "Debug"
     }
   ],

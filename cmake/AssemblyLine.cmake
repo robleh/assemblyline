@@ -1,253 +1,521 @@
 ##############################################################################
 # Options
 ##############################################################################
-option(AL_ALIGN_STACK "Use x64 alignment stub as entrypoint (requires default entrypoint)" ON)
-option(AL_MERGE_RDATA "Merge .rdata with .text" ON)
+option(INSTALL_AL "Install Assembly Line targets" OFF)
+option(AL_MERGE_RDATA "Merge .rdata with code" ON)
+option(AL_MERGE_DATA "Merge .data data with code" OFF)
+option(AL_PATCH_ENTRY "Patch start of PIC with jump to entry" OFF)
+option(AL_ASM "Use assembler for core Assemblyline functions" ON)
+option(AL_C "Enable C support for tests" ON)
 option(AL_TESTS "Build Assembly Line unit tests" ON)
 option(AL_EXAMPLES "Build Assembly Line examples" OFF)
-option(INSTALL_AL "Install Assembly Line targets" OFF)
+option(AL_PHNT "Make https://github.com/mrexodia/phnt-single-headers available" OFF)
+option(AL_MESSAGEBOX_EXAMPLE "Build Assembly Line messagebox example" ${AL_EXAMPLES})
+option(AL_CREATEPROCESS_EXAMPLE "Build Assembly Line createprocess example" ${AL_EXAMPLES})
 
-if(AL_ALIGN_STACK)
-    if(DEFINED AL_ENTRYPOINT)
-        message(FATAL_ERROR "Assembly Line: AL_ALIGN_STACK is incompatible with AL_ENTRYPOINT")
-    endif()
+# Entry function to be specified by the linker for executables.
+if(NOT DEFINED AL_ENTRY)
+    set(AL_ENTRY entry)
+endif()
 
-    set(AL_ENTRYPOINT align)
-
-    set(
-        AL_ORDER_FILE 
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/x64/stack-align.txt>$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_SYSCONFDIR}/stack-align.txt>
-    )
-
-    message(STATUS "Assembly Line: x64 stack alignment stub will be used as entrypoint")
-    message(VERBOSE "Assembly Line: AL_ENTRYPOINT = ${AL_ENTRYPOINT}")
-    message(VERBOSE "Assembly Line: AL_ORDER_FILE = ${AL_ORDER_FILE}")
+if(NOT DEFINED AL_MERGE)
+    set(AL_MERGE /merge:.al=.text /merge:.text=.pic)
 endif()
 
 if(AL_MERGE_RDATA)
-    # Prepend .jmp to .rdata when using MSVC
-    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-        set(AL_MERGE_SECTIONS /MERGE:.jmp=.rdata /MERGE:.rdata=.text)
-    else()
-        set(AL_MERGE_SECTIONS /MERGE:.rdata=.text)
-    endif()
+    set(AL_MERGE /merge:.rdata=.al ${AL_MERGE})
+    message(STATUS "Assembly Line: Linker will merge .rdata with code")
+endif()
 
-    message(STATUS "Assembly Line: Linker will merge .rdata with .text")
-    message(VERBOSE "Assembly Line: AL_MERGE_SECTIONS = ${AL_MERGE_SECTIONS}")
+if(AL_MERGE_DATA)
+    set(AL_MERGE /merge:.data=.al ${AL_MERGE})
+    message(STATUS "Assembly Line: Linker will merge .data with code")
 endif()
 
 ##############################################################################
-# Compiler Defaults
+# Toolchain Option Interfaces
 ##############################################################################
-if(NOT DEFINED AL_CXX_FLAGS)
-    set(AL_CXX_FLAGS /nologo /c /GS- /Zl /Oi)
-endif()
+# Directory that will contain the response files for build tools.
+set(AL_TOOLCHAIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/al)
 
-if(NOT DEFINED AL_CXX_FLAGS_DEBUG)
-    set(AL_CXX_FLAGS_DEBUG /Zi /Od)
-endif()
-
-if(NOT DEFINED AL_CXX_FLAGS_RELEASE)
-    set(AL_CXX_FLAGS_RELEASE /O1)
-endif()
-
-##############################################################################
-# Linker Defaults
-##############################################################################
-if(NOT DEFINED AL_ENTRYPOINT)
-    set(AL_ENTRYPOINT entry)
-endif()
-
-if(NOT DEFINED AL_ORDER_FILE)
-    set(AL_ORDER)
-else()
-    set(AL_ORDER /ORDER:@${AL_ORDER_FILE})
-endif()
-
-if(NOT DEFINED AL_MERGE_SECTIONS)
-    set(AL_MERGE_SECTIONS)
-endif()
-
-if(NOT DEFINED AL_EXE_LINKER_FLAGS)
-    set(AL_EXE_LINKER_FLAGS /nologo /NODEFAULTLIB /entry:${AL_ENTRYPOINT} ${AL_ORDER} ${AL_MERGE_SECTIONS})
-endif()
-
-if(NOT DEFINED AL_EXE_LINKER_FLAGS_DEBUG)
-    set(AL_EXE_LINKER_FLAGS_DEBUG /DEBUG)
-endif()
-
-if(NOT DEFINED AL_EXE_LINKER_FLAGS_RELEASE)
-    set(AL_EXE_LINKER_FLAGS_RELEASE /EMITPOGOPHASEINFO)
-endif()
-
-message(VERBOSE "Assembly Line: AL_CXX_FLAGS = ${AL_CXX_FLAGS}")
-message(VERBOSE "Assembly Line: AL_EXE_LINKER_FLAGS = ${AL_EXE_LINKER_FLAGS}")
-message(VERBOSE "Assembly Line: AL_CXX_FLAGS_DEBUG = ${AL_CXX_FLAGS_DEBUG}")
-message(VERBOSE "Assembly Line: AL_EXE_LINKER_FLAGS_DEBUG = ${AL_EXE_LINKER_FLAGS_DEBUG}")
-message(VERBOSE "Assembly Line: AL_CXX_FLAGS_RELEASE = ${AL_CXX_FLAGS_RELEASE}")
-message(VERBOSE "Assembly Line: AL_EXE_LINKER_FLAGS_RELEASE = ${AL_EXE_LINKER_FLAGS_RELEASE}")
-
-# should these even be here? they are becoming part of the installed interface
-if (INSTALL_AL)
-    install(
-        FILES
-            ${AL_ORDER_FILE}
-        DESTINATION
-            ${CMAKE_INSTALL_SYSCONFDIR}
-        OPTIONAL
-    )
-
-    install(
-        FILES
-            ${PROJECT_SOURCE_DIR}/src/x64/stack-align.txt
-        DESTINATION
-            ${CMAKE_INSTALL_SYSCONFDIR}
-    )
-endif()
-
-##############################################################################
-# Interface Targets
-##############################################################################
-# What happens to these if they are part of the installation interface? Do
-# they get overriden?
 add_library(al-compiler INTERFACE)
 add_library(al::compiler ALIAS al-compiler)
 set_target_properties(al-compiler PROPERTIES EXPORT_NAME compiler)
 
-target_compile_options(
-    al-compiler
-    INTERFACE
-        $<$<CONFIG:Debug>:${AL_CXX_FLAGS} ${AL_CXX_FLAGS_DEBUG}>
-        $<$<CONFIG:Release>:${AL_CXX_FLAGS} ${AL_CXX_FLAGS_RELEASE}>
-)
+# Allow position independent object files to be linked with MSVCRT by
+# disabling FAILIFMISMATCH directives.
+function(al_disable_msvcrt_directives)
+    target_compile_definitions(
+        al-compiler
+        INTERFACE
+            _ALLOW_RUNTIME_LIBRARY_MISMATCH
+            _ALLOW_MSC_VER_MISMATCH
+            _ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH
+            _CRT_STDIO_ARBITRARY_WIDE_SPECIFIERS
+    )
+endfunction()
 
 add_library(al-linker INTERFACE)
 add_library(al::linker ALIAS al-linker)
 set_target_properties(al-linker PROPERTIES EXPORT_NAME linker)
 
-target_link_options(
-    al-linker
-    INTERFACE
-        $<$<CONFIG:Debug>:${AL_EXE_LINKER_FLAGS} ${AL_EXE_LINKER_FLAGS_DEBUG}>
-        $<$<CONFIG:Release>:${AL_EXE_LINKER_FLAGS} ${AL_EXE_LINKER_FLAGS_RELEASE}>
-)
+add_library(al-linker-exe INTERFACE)
+add_library(al::linker::exe ALIAS al-linker-exe)
+set_target_properties(al-linker-exe PROPERTIES EXPORT_NAME linker::exe)
+target_link_libraries(al-linker-exe INTERFACE al-linker)
+
+add_library(al-linker-dll INTERFACE)
+add_library(al::linker::dll ALIAS al-linker-dll)
+set_target_properties(al-linker-dll PROPERTIES EXPORT_NAME linker::dll)
+target_link_libraries(al-linker-dll INTERFACE al-linker)
+
+add_library(al-assembler INTERFACE)
+add_library(al::assembler ALIAS al-assembler)
+set_target_properties(al-assembler PROPERTIES EXPORT_NAME assembler)
 
 if (INSTALL_AL)
     install(
         TARGETS
+            al-assembler
             al-compiler
             al-linker
+            al-linker-exe
+            al-linker-dll
         EXPORT
             al-targets
     )
 endif()
 
 ##############################################################################
-# Functions and Macros
+# Compiler Configuration
 ##############################################################################
-function(_add_pic name)
-    cmake_parse_arguments(PARSE_ARGV 1 PIC "" "PUBLIC_HEADER" "LIBRARIES")
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
+    if (NOT DEFINED AL_CXX_FLAGS)
+        set(
+            AL_CXX_FLAGS
+            /nologo                            # No banner in logs
+            /c                                 # Compile without linking
+            /GS-                               # Disable buffer security
+            /Zl                                # No default lib name in obj
+            /Oi                                # Enable intrinsics
+            /Zc:preprocessor                   # Enable VA_OPT for macros
+            /Fa${CMAKE_CURRENT_BINARY_DIR}\\   # Generate assembly listing
+        )
+    endif()
 
-    # Use the provided PUBLIC_HEADER if given, but fallback to ${name}.hpp by
-    # default. If no public header is given warn the user.
-    if(NOT DEFINED PIC_PUBLIC_HEADER)
-        list(FIND PIC_UNPARSED_ARGUMENTS ${name}.hpp PUBLIC_HEADER_INDEX)
+    if (NOT DEFINED AL_CXX_FLAGS_DEBUG)
+        set(
+            AL_CXX_FLAGS_DEBUG
+            /Zi                                # Generate full PDB
+            /Od                                # Disable optimizations
+        )
+    endif()
 
-        if (PUBLIC_HEADER_INDEX EQUAL -1)
-            message(WARNING "Assembly Line: PIC target ${name} has no public header")
-        else()
-            list(GET PIC_UNPARSED_ARGUMENTS ${PUBLIC_HEADER_INDEX} PIC_PUBLIC_HEADER)
-            list(REMOVE_AT PIC_UNPARSED_ARGUMENTS ${PUBLIC_HEADER_INDEX})
+    if (NOT DEFINED AL_CXX_FLAGS_RELEASE)
+        set(
+            AL_CXX_FLAGS_RELEASE
+            /O1                                # Optimize for binary size
+        )
+    endif()
+
+    al_disable_msvcrt_directives()
+
+    target_compile_options(
+        al-compiler
+        INTERFACE
+            @${AL_TOOLCHAIN_DIR}/$<CONFIG>/compiler-options
+    )
+elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
+    if (NOT DEFINED AL_CXX_FLAGS)
+        set(
+            AL_CXX_FLAGS
+            -c
+            --target=amd64-pc-windows-msvc
+            -fdiagnostics-absolute-paths
+            -fno-stack-protector
+            -nodefaultlibs
+        )
+    endif()
+
+    if (NOT DEFINED AL_CXX_FLAGS_DEBUG)
+        set(
+            AL_CXX_FLAGS_DEBUG
+            -g
+            -O0
+        )
+    endif()
+
+    if (NOT DEFINED AL_CXX_FLAGS_RELEASE)
+        set(
+            AL_CXX_FLAGS_RELEASE
+            -Oz
+        )
+    endif()
+
+    al_disable_msvcrt_directives()
+
+    # The @ prefix for response files was breaking using Windows encoding. If
+    # that can be fixed all 3 compilers can be converged into one command.
+    target_compile_options(
+        al-compiler
+        BEFORE
+        INTERFACE
+            --config=${AL_TOOLCHAIN_DIR}/$<CONFIG>/compiler-options
+    )
+elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
+    if (NOT DEFINED AL_CXX_FLAGS)
+        set(
+            AL_CXX_FLAGS
+            -mconsole
+            -nostdlib
+            -fno-exceptions
+            -fno-asynchronous-unwind-tables
+            -ffunction-sections
+            -fno-ident
+        )
+    endif()
+
+    if (NOT DEFINED AL_CXX_FLAGS_DEBUG)
+        set(
+            AL_CXX_FLAGS_DEBUG
+            -g
+            -O0
+        )
+    endif()
+
+    if (NOT DEFINED AL_CXX_FLAGS_RELEASE)
+        set(
+            AL_CXX_FLAGS_RELEASE
+            -O2
+        )
+    endif()
+
+    al_disable_msvcrt_directives()
+
+    # The @ prefix for a response files was breaking command-line encoding for
+    # some reason. Unfortunately, that means the compiler options must be
+    # configured for each toolchain.
+    target_compile_options(
+        al-compiler
+        BEFORE
+        INTERFACE
+            @${AL_TOOLCHAIN_DIR}/$<CONFIG>/compiler-options
+    )
+else()
+    message(FATAL_ERROR "${CMAKE_CXX_COMPILER_ID} compiler not supported")
+endif()
+
+file(
+    GENERATE
+    OUTPUT
+        ${AL_TOOLCHAIN_DIR}/$<CONFIG>/compiler-options
+    CONTENT
+        "$<JOIN:\
+${AL_CXX_FLAGS} \
+$<$<CONFIG:Debug>:${AL_CXX_FLAGS_DEBUG}>\
+$<$<CONFIG:Release>:${AL_CXX_FLAGS_RELEASE}>\
+, >"
+)
+
+##############################################################################
+# Linker Configuration
+##############################################################################
+if (${CMAKE_CXX_COMPILER_LINKER_ID} STREQUAL MSVC)
+    if (NOT DEFINED AL_EXE_LINKER_FLAGS)
+        set(
+            AL_EXE_LINKER_FLAGS
+            /nologo
+            /nodefaultlib
+            /map
+            /manifest:no
+            /emittoolversioninfo:no
+            /entry:${AL_ENTRY}
+            ${AL_MERGE}
+        )
+    endif()
+
+    if (NOT DEFINED AL_EXE_LINKER_FLAGS_DEBUG)
+        set(
+            AL_CXX_FLAGS_DEBUG
+            /debug
+            /opt:ref
+        )
+    endif()
+
+    if (NOT DEFINED AL_EXE_LINKER_FLAGS_RELEASE)
+        set(
+            AL_EXE_LINKER_FLAGS_RELEASE
+            /emitpogophaseinfo
+            /merge:.xdata=.xxxdata
+        )
+    endif()
+
+    target_link_options(
+        al-linker
+        BEFORE
+        INTERFACE
+            @${AL_TOOLCHAIN_DIR}/$<CONFIG>/linker-options
+    )
+elseif (${CMAKE_CXX_COMPILER_LINKER_ID} STREQUAL LLD)
+    if (NOT DEFINED AL_EXE_LINKER_FLAGS)
+        set(
+            AL_EXE_LINKER_FLAGS
+            /nologo
+            /nodefaultlib
+            /map
+            /manifest:no
+            ${AL_MERGE}
+        )
+    endif()
+
+    if (NOT DEFINED AL_EXE_LINKER_FLAGS_DEBUG)
+        set(
+            AL_CXX_FLAGS_DEBUG
+            /debug
+            /opt:ref
+        )
+    endif()
+
+    if (NOT DEFINED AL_EXE_LINKER_FLAGS_RELEASE)
+        set(
+            AL_EXE_LINKER_FLAGS_RELEASE
+            /emitpogophaseinfo
+            /merge:.xdata=.xxxdata
+        )
+    endif()
+
+    target_link_options(
+        al-linker
+        BEFORE
+        INTERFACE
+            -Wl,@${AL_TOOLCHAIN_DIR}/$<CONFIG>/linker-options
+    )
+
+    target_link_options(
+        al-linker-exe
+        BEFORE
+        INTERFACE
+            /entry:${AL_ENTRY}
+    )
+
+    target_link_options(
+        al-linker
+        BEFORE
+        INTERFACE
+            /noentry
+    )
+elseif (${CMAKE_CXX_COMPILER_LINKER_ID} STREQUAL GNU)
+    if (NOT DEFINED AL_EXE_LINKER_FLAGS)
+        set(
+            AL_EXE_LINKER_FLAGS
+            -M
+            --entry=${AL_ENTRY}
+            -T${AL_TOOLCHAIN_DIR}/$<CONFIG>/script.ld
+            --no-seh
+        )
+    endif()
+
+    if (NOT DEFINED AL_EXE_LINKER_FLAGS_DEBUG)
+        set(AL_CXX_FLAGS_DEBUG)
+    endif()
+
+    if (NOT DEFINED AL_EXE_LINKER_FLAGS_RELEASE)
+        set(
+            AL_EXE_LINKER_FLAGS_RELEASE
+            -s
+        )
+    endif()
+
+    target_link_options(
+        al-linker
+        BEFORE
+        INTERFACE
+            -nostdlib -Wl,@${AL_TOOLCHAIN_DIR}/$<CONFIG>/linker-options
+    )
+
+    file(
+        GENERATE
+        OUTPUT
+            ${AL_TOOLCHAIN_DIR}/$<CONFIG>/script.ld
+        CONTENT
+"SECTIONS\n
+{\n
+  . = SIZEOF_HEADERS;\n
+  . = ALIGN(__section_alignment__);\n
+  .pic  __image_base__ + ( __section_alignment__ < 0x1000 ? . : __section_alignment__ ) :\n
+  {\n
+    *(.al$*)\n
+    *(.rdata)\n
+    *(SORT(.rdata$*))\n
+    *(.data)\n
+    *(SORT(.data$*))\n
+    *(.text)\n
+    *(SORT(.text$*))\n
+  }\n
+}"
+)
+else()
+    message(FATAL_ERROR "${CMAKE_CXX_COMPILER_ID} linker not supported")
+endif()
+
+file(
+    GENERATE
+    OUTPUT
+        ${AL_TOOLCHAIN_DIR}/$<CONFIG>/linker-options
+    CONTENT
+        "$<JOIN:\
+        ${AL_EXE_LINKER_FLAGS}\
+        $<$<CONFIG:Debug>:${AL_EXE_LINKER_FLAGS_DEBUG}>\
+        $<$<CONFIG:Release>:${AL_EXE_LINKER_FLAGS_RELEASE}>\
+        , >"
+)
+
+##############################################################################
+# Assembler Configuration
+##############################################################################
+# ASM_MASM is not always set so we need to check if it's defined to avoid
+# issues.
+if (DEFINED ${CMAKE_ASM_MASM_COMPILER_ID} AND ${CMAKE_ASM_MASM_COMPILER_ID} STREQUAL MSVC)
+    if (NOT DEFINED AL_ASM_MASM_FLAGS)
+        set(
+            AL_ASM_MASM_FLAGS
+            /nologo
+            /Gy
+        )
+    endif()
+
+    if (NOT DEFINED AL_ASM_MASM_FLAGS_DEBUG)
+        set(
+            AL_CXX_FLAGS_DEBUG
+        )
+    endif()
+
+    if (NOT DEFINED AL_ASM_MASM_FLAGS_RELEASE)
+        set(
+            AL_EXE_LINKER_FLAGS_RELEASE
+        )
+    endif()
+
+# Off brand MASM compatible compilers don't have compiler ID defined.
+elseif (NOT DEFINED ${CMAKE_ASM_MASM_COMPILER_ID})
+    if(${CMAKE_ASM_MASM_COMPILER} MATCHES ".*uasm.*")
+        if (NOT DEFINED AL_ASM_MASM_FLAGS)
+            set(
+                AL_ASM_MASM_FLAGS
+                -win64
+            )
+        endif()
+
+        if (NOT DEFINED AL_ASM_MASM_FLAGS_DEBUG)
+            set(
+                AL_CXX_FLAGS_DEBUG
+            )
+        endif()
+
+        if (NOT DEFINED AL_ASM_MASM_FLAGS_RELEASE)
+            set(
+                AL_EXE_LINKER_FLAGS_RELEASE
+            )
         endif()
     endif()
+else()
+    message(FATAL_ERROR "${CMAKE_ASM_MASM_COMPILER} assembler not supported")
+endif()
 
-    # If no LIBRARIES provided use al::lib.
-    if(NOT DEFINED PIC_LIBRARIES)
-        set(PIC_LIBRARIES al::al)
+target_compile_options(
+    al-assembler
+    INTERFACE
+        @${AL_TOOLCHAIN_DIR}/$<CONFIG>/assembler-options
+)
+
+file(
+    GENERATE
+    OUTPUT
+        ${AL_TOOLCHAIN_DIR}/$<CONFIG>/assembler-options
+    CONTENT
+        "$<JOIN:\
+        ${AL_ASM_MASM_FLAGS}\
+        $<$<CONFIG:Debug>:${AL_ASM_MASM_FLAGS_DEBUG}>\
+        $<$<CONFIG:Release>:${AL_ASM_MASM_FLAGS_RELEASE}>\
+        , >"
+)
+
+##############################################################################
+# Functions and Macros
+##############################################################################
+function(al_dump_target name)
+    get_target_property(target_type ${name} TYPE)
+
+    # Only dump executable types
+    if(NOT target_type STREQUAL "STATIC_LIBRARY")
+        add_custom_command(
+            TARGET
+                ${name}
+            POST_BUILD
+            COMMAND
+                al::dump "$<TARGET_FILE:${name}>" $<$<BOOL:${AL_PATCH_ENTRY}>:patch_entry>
+            WORKING_DIRECTORY
+                "$<TARGET_FILE_DIR:${name}>"
+            COMMENT
+                "Assembly Line: Dumping PIC section from $<TARGET_FILE:${name}>"
+        )
     endif()
+endfunction()
 
-    # Format lists for inline use
-    list(JOIN PIC_UNPARSED_ARGUMENTS " " PIC_SOURCES)
-    list(JOIN PIC_LIBRARIES " " PIC_LIBRARIES)
+function(al_configure_target name)
+    set_target_properties(${name} PROPERTIES EXPORT_COMPILE_COMMANDS ON)
+    target_link_libraries(${name} PRIVATE al::al al::compiler)
 
-    message(DEBUG "Assembly Line: ${name} PIC source files are ${PIC_SOURCES}")
-    message(DEBUG "Assembly Line: ${name} PIC header is ${PIC_PUBLIC_HEADER}")
-    message(DEBUG "Assembly Line: ${name} PIC libraries are ${PIC_LIBRARIES}")
-
-    # Name the container PE to name.exe not name-pe.exe
-    add_executable(${name}-pe)
-    set_target_properties(${name}-pe PROPERTIES OUTPUT_NAME ${name})
-    set_target_properties(${name}-pe PROPERTIES EXPORT_COMPILE_COMMANDS ON)
-
-    target_sources(
-        ${name}-pe
-        PRIVATE
-            ${PIC_SOURCES}
-        PUBLIC
-            FILE_SET
-                ${name}_header
-            TYPE
-                HEADERS
-            FILES
-                ${PIC_PUBLIC_HEADER}
-    )
-    
-    # Static libraries must be position independent
-    target_link_libraries(${name}-pe PRIVATE al::linker ${PIC_LIBRARIES})
-
-    target_compile_definitions(${name}-pe PUBLIC AL_PRNG_SEED=0x${AL_PRNG_SEED})
-
-    # Target-dependent expressions are not permitted in the BYPRODUCT field
-    # of add_custom_command.
-    set(PIC_PATH "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/${name}.bin")
-    message(DEBUG "Assembly Line: ${name} PIC_PATH = ${PIC_PATH}")
-
-    # Dump the .text section
-    add_custom_command(
-        TARGET
-            ${name}-pe
-        POST_BUILD
-        COMMAND
-            al::dump "$<TARGET_FILE:${name}-pe>" $<$<CXX_COMPILER_ID:MSVC>:patch_entry>
-        BYPRODUCTS
-            "${PIC_PATH}"
-        WORKING_DIRECTORY
-            "$<TARGET_FILE_DIR:${name}-pe>"
-        COMMENT
-            "Assembly Line: Dumping .text section of $<TARGET_FILE:${name}-pe> $<$<CXX_COMPILER_ID:MSVC>:and patching entrypoint>"
-    )
-
-    add_library(${name} INTERFACE)
-
-    target_sources(
-        ${name}
-        PRIVATE
-            "${PIC_PATH}"
-        INTERFACE
-            FILE_SET
-                ${name}_header
-            TYPE
-                HEADERS
-    )
-
-    string(TOUPPER ${name} PREFIX)
+    get_target_property(target_type ${name} TYPE)
+    if(NOT target_type STREQUAL "STATIC_LIBRARY")
+        target_link_libraries(${name} PRIVATE al::intrinsic al::linker)
+    endif()
 
     target_compile_definitions(
         ${name}
-        INTERFACE
-            ${PREFIX}_PIC_PATH="${PIC_PATH}"
+        PRIVATE
+            AL_PRNG_SEED=0x${AL_PRNG_SEED}
     )
+
+    al_dump_target(${name})
 endfunction()
 
-function(_add_pic_library)
-#unimplemented
+function(_al_add_library name)
+    add_library(${name} ${ARGN})
+    al_configure_target(${name})
+endfunction()
+
+function(_al_add_executable name)
+    add_executable(${name} ${ARGN})
+    al_configure_target(${name})
+endfunction()
+
+function(add_pic_test name)
+    if(AL_TESTS)
+        # Need target to be built but does not require relinking
+        # Currently each time the PIC executable is built al-test needs to rebuild
+        add_dependencies(al-test ${name})
+
+        set_property(
+            SOURCE
+                ${ARGN}
+                TARGET_DIRECTORY
+                    al-test
+            APPEND
+            PROPERTY
+                COMPILE_DEFINITIONS AL_EXE_PATH="$<TARGET_FILE:${name}>"
+                COMPILE_DEFINITIONS AL_PIC_PATH="$<TARGET_FILE:${name}>.pic"
+        )
+
+        target_sources(al-test PRIVATE ${ARGN})
+    endif()
 endfunction()
 
 # We need to mask default language flags for the caller. Could not get this to
 # work in a function or by setting properties directly. Otherwise, langauge
 # flags need to be disabled globally and non-pic targets need to have them set
 # again via an interface library.
-macro(mask_default_flags)
+macro(al_mask_flags)
     # Clear default compiler and linker flags that conflict with position
     # independence. Should only affect the current CMakeLists.txt scope.
     set(CMAKE_CXX_FLAGS "")
@@ -261,12 +529,11 @@ macro(mask_default_flags)
     set(CMAKE_C_FLAGS_RELEASE "")
     set(CMAKE_C_FLAGS_MINSIZEREL "")
     set(CMAKE_C_FLAGS_RELWITHDEBINFO "")
-    set(CMAKE_C_STANDARD_LIBRARIES "")
-    set(CMAKE_EXE_LINKER_FLAGS "")
     set(CMAKE_EXE_LINKER_FLAGS_DEBUG "")
     set(CMAKE_EXE_LINKER_FLAGS_RELEASE "")
-    set(CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "")
-    set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "")
+    set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "")
+    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "")
+    set(CMAKE_C_STANDARD_LIBRARIES "")
     set(CMAKE_MSVC_RUNTIME_LIBRARY "")
     set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "")
 
@@ -276,14 +543,45 @@ macro(mask_default_flags)
 endmacro()
 
 # Provide a new PRNG seed each time assemblyline is configured
-macro(seed_prng)
+macro(al_seed_prng)
     string(RANDOM LENGTH 8 ALPHABET "0123456789abcdef" AL_PRNG_SEED)
     message(DEBUG "Assembly Line: PRNG seed 0x${AL_PRNG_SEED}")
 endmacro()
 
-macro(add_pic)
-    mask_default_flags()
-    seed_prng()
-    _add_pic(${ARGV})
+macro(al_init)
+    al_mask_flags()
+    al_seed_prng()
 endmacro()
 
+macro(add_pic_library)
+    al_init()
+    _al_add_library(${ARGV})
+endmacro()
+
+macro(add_pic_executable)
+    al_init()
+    _al_add_executable(${ARGV})
+endmacro()
+
+##############################################################################
+# External
+##############################################################################
+if (AL_PHNT)
+    set(phnt_TAG "v1.2-4d1b102f")
+    message(STATUS "Fetching phnt (${phnt_TAG})...")
+    FetchContent_Declare(
+        phnt
+        URL
+            "https://github.com/mrexodia/phnt-single-header/releases/download/${phnt_TAG}/phnt.zip"
+        URL_HASH
+            "SHA256=ac86517816cec0a38ba7ff1fff49735ce143b45542118376d71c522fdb75c0c7"
+    )
+    FetchContent_MakeAvailable(phnt)
+
+    install(
+        FILES
+            ${phnt_SOURCE_DIR}/phnt.h
+        DESTINATION
+            ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+endif()

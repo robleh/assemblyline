@@ -1,58 +1,51 @@
-mask_default_flags()
+al_mask_flags()
+add_subdirectory("intrinsic")
 
 add_library(al STATIC)
 add_library(al::al ALIAS al)
 
-set_target_properties(al PROPERTIES EXPORT_NAME al)
-set_target_properties(al PROPERTIES STATIC_LIBRARY_OPTIONS /nologo)
-set_target_properties(al PROPERTIES EXPORT_COMPILE_COMMANDS ON)
-
-target_link_libraries(
+set_target_properties(
     al
-    PUBLIC
-        $<BUILD_INTERFACE:phnt_headers>
-        al::compiler
+    PROPERTIES
+        EXPORT_NAME al
+        EXPORT_COMPILE_COMMANDS ON
 )
+
+target_link_libraries(al PRIVATE al::compiler)
 
 target_include_directories(
     al
-    INTERFACE
+    PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-add_library(align_stack OBJECT x64/align.asm)
-target_compile_options(align_stack PRIVATE /nologo)
+if (AL_ASM)
+    add_subdirectory("x64")
+endif()
 
 target_sources(
     al
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/import.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/pe/export.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/peb/peb.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/intrinsic/memcpy.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/intrinsic/memcmp.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/intrinsic/memmove.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/intrinsic/memset.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/intrinsic/strlen.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/intrinsic/wcslen.cpp
-        $<TARGET_OBJECTS:align_stack>
     PUBLIC
-        FILE_SET
-            al_headers
-        TYPE
-            HEADERS
+        FILE_SET CXX_MODULES FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/al.cppm
+            ${CMAKE_CURRENT_SOURCE_DIR}/import.cppm
+            ${CMAKE_CURRENT_SOURCE_DIR}/hash.cppm
+            ${CMAKE_CURRENT_SOURCE_DIR}/prng.cppm
+            ${CMAKE_CURRENT_SOURCE_DIR}/string.cppm
+    PUBLIC
+        FILE_SET al_header TYPE HEADERS
         BASE_DIRS
-            ${PROJECT_SOURCE_DIR}/include
+            ${PROJECT_SOURCE_DIR}/include/al
         FILES
             ${PROJECT_SOURCE_DIR}/include/al/al.hpp
-            ${PROJECT_SOURCE_DIR}/include/al/hash.hpp
-            ${PROJECT_SOURCE_DIR}/include/al/import.hpp
-            ${PROJECT_SOURCE_DIR}/include/al/intrinsic.hpp
-            ${PROJECT_SOURCE_DIR}/include/al/pe.hpp
-            ${PROJECT_SOURCE_DIR}/include/al/peb.hpp
-            ${PROJECT_SOURCE_DIR}/include/al/prng.hpp
-            ${PROJECT_SOURCE_DIR}/include/al/string.hpp
+)
+
+target_sources(
+    al-test
+    PRIVATE
+        import_test.cpp
+        hash_test.cpp
 )
 
 if (INSTALL_AL)
@@ -63,14 +56,9 @@ if (INSTALL_AL)
             al-targets
         ARCHIVE DESTINATION
             ${CMAKE_INSTALL_LIBDIR}
-        FILE_SET al_headers DESTINATION
+        FILE_SET CXX_MODULES DESTINATION
             ${CMAKE_INSTALL_INCLUDEDIR}
-    )
-
-    install(
-        FILES
-            ${phnt_SOURCE_DIR}/phnt.h
-        DESTINATION
+        FILE_SET al_header DESTINATION
             ${CMAKE_INSTALL_INCLUDEDIR}
     )
 endif()

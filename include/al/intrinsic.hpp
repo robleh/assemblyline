@@ -1,7 +1,10 @@
 // intrinsic.hpp contains compiler intrinsic replacements.
 #pragma once
+#include <stddef.h>
 
+#ifdef __cplusplus
 extern "C" {
+#endif
 
 int memcmp(const void* lhs, const void* rhs, size_t n);
 #pragma intrinsic(memcmp)
@@ -21,4 +24,12 @@ size_t strlen(const char* s);
 size_t wcslen(const wchar_t* s);
 #pragma intrinsic(wcslen)
 
+int strcmp(const char* lhs, const char* rhs);
+#pragma intrinsic(strcmp)
+
+int wcscmp(const wchar_t* lhs, const wchar_t* rhs);
+#pragma intrinsic(wcscmp)
+
+#ifdef __cplusplus
 } // extern "C"
+#endif

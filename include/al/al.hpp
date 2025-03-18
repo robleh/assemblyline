@@ -1,24 +1,44 @@
-// Assembly Line library for Position Independent Code
-// compilation on Windows.
 #pragma once
-#include "import.hpp"
-#include "intrinsic.hpp"
 
-// MSVC prepends .rdata to .text when merging them. .jmp is a placeholder for
-// the jmp instruction that the al-tool patches in before dumping the PIC. It
-// appears that MSVC places 8 bytes of padding at the beginning of .rdata. So,
-// this section may not always be required. However, this should guarantee the
-// padding is there.
-#if defined(_MSC_VER) && !defined(__clang__)
-#pragma section(".jmp", read)
-__declspec(allocate(".jmp")) long jmp {};
+// Place entry function in dedicated section fragment
+#ifndef __GNUC__
+#define AL_ENTRY _Pragma("code_seg(\".al$200\")")
+#else
+#define AL_ENTRY __attribute__((section (".al$200")))
 #endif
 
-// x64 stack alignment ASM
-extern "C" void align_stack();
+#ifdef __cplusplus
 
-// Optional entrypoint that aligns the stack on x64. Expects a function named
-// entry which it passes execution to. Requires the default AL_ORDER_FILE.
-extern "C" void align() {
-    align_stack();
-}
+import al;
+
+// Convenience macros for imports
+//
+// Cast a pointer to the type of a declaration known to the compiler
+#define DECL_CAST(symbol, expression) reinterpret_cast<decltype(&symbol)>(expression)
+
+// Get module handle by string, hash, or custom criteria
+#define GM(dll, ...) al::get_module(dll ## __VA_OPT__(_) ## __VA_ARGS__)
+
+// Get proc address by string, hash, or custom criteria
+#define GP(dll, symbol, ...) DECL_CAST(symbol, al::get_proc(dll, # symbol ## __VA_OPT__(_) ## __VA_ARGS__))
+
+#else // !__cplusplus
+
+#include <wchar.h>
+
+// Resolve base address of loaded DLL
+void* get_module_handle(const wchar_t* name);
+void* get_module_hash(unsigned long hash, unsigned long (*hasher)(const wchar_t*));
+
+// Resolve address of DLL export
+void* get_proc_address(void* module, const char* name);
+void* get_proc_hash(void* module, unsigned long hash, unsigned long (*hasher)(const char*));
+
+// String hashing algorithms
+unsigned long ror13_ansi(const char*);
+unsigned long ror13_utf16(const wchar_t*);
+unsigned long djb2_ansi(const char*);
+unsigned long djb2_utf16(const wchar_t*);
+
+#endif // __cplusplus
+

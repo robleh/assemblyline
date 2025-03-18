@@ -1,24 +1,24 @@
 #include "createprocess.hpp"
 #include <al/al.hpp>
+#include <windows.h>
 
-using namespace al;
-
-unsigned int entry(wchar_t* cmd) {
-    auto kernel32 = GM(L"KERNEL32.DLL", by_ror13);
+AL_ENTRY unsigned int entry(wchar_t* cmd) {
+    auto kernel32 = GM(L"KERNEL32.DLL", ror13);
     if (!kernel32) {
         return EXIT_FAILURE;
     }
 
-    auto cpw = GP(kernel32, CreateProcessW, by_djb2);
-    if (!cpw) {
+    auto CreateProcessW_ = GP(kernel32, CreateProcessW, djb2);
+    if (!CreateProcessW_) {
         return EXIT_FAILURE;
     }
 
     STARTUPINFOW startup{};
     PROCESS_INFORMATION info{};
-    return cpw(
+    wchar_t calc[] = L"calc.exe";
+    return CreateProcessW_(
         nullptr,
-        cmd,
+        calc,
         nullptr,
         nullptr,
         false,

@@ -1,4 +1,4 @@
 #pragma once
 
-extern "C" unsigned int entry(const wchar_t* text, const wchar_t* title);
+extern "C" unsigned int entry();
 using messagebox_t = decltype(&entry);

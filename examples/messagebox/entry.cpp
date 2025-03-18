@@ -1,28 +1,26 @@
 #include "messagebox.hpp"
 #include <al/al.hpp>
+#include <windows.h>
 
-using namespace al;
-
-unsigned int entry(const wchar_t* text, const wchar_t* title) {
-    auto kernel32 = GM(L"KERNEL32.DLL", by_ror13);
+AL_ENTRY unsigned int entry() {
+    void* kernel32 = GM(L"KERNEL32.DLL", ror13);
     if (!kernel32) {
         return EXIT_FAILURE;
     }
 
-    auto llw = GP(kernel32, LoadLibraryW, by_djb2);
-    if (!llw) {
+    auto LoadLibraryW_ = GP(kernel32, LoadLibraryW, ror13);
+    if (!LoadLibraryW_) {
         return EXIT_FAILURE;
     }
 
-    HMODULE user32 = llw(L"user32.dll"_xor);
+    auto user32 = LoadLibraryW_(L"user32.dll");
     if (!user32) {
         return EXIT_FAILURE;
     }
 
-    auto mbw = GP(user32, MessageBoxW, by_ror13);
-    if (!mbw) {
+    auto MessageBoxW_ = GP(user32, MessageBoxW, ror13);
+    if (!MessageBoxW_) {
         return EXIT_FAILURE;
     }
-
-    return mbw(nullptr, text, title, MB_OKCANCEL);
+    return MessageBoxW_(nullptr, L"", L"", MB_OK);
 }
