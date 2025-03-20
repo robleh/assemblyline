@@ -59,16 +59,6 @@ add_library(al-linker INTERFACE)
 add_library(al::linker ALIAS al-linker)
 set_target_properties(al-linker PROPERTIES EXPORT_NAME linker)
 
-add_library(al-linker-exe INTERFACE)
-add_library(al::linker::exe ALIAS al-linker-exe)
-set_target_properties(al-linker-exe PROPERTIES EXPORT_NAME linker::exe)
-target_link_libraries(al-linker-exe INTERFACE al-linker)
-
-add_library(al-linker-dll INTERFACE)
-add_library(al::linker::dll ALIAS al-linker-dll)
-set_target_properties(al-linker-dll PROPERTIES EXPORT_NAME linker::dll)
-target_link_libraries(al-linker-dll INTERFACE al-linker)
-
 add_library(al-assembler INTERFACE)
 add_library(al::assembler ALIAS al-assembler)
 set_target_properties(al-assembler PROPERTIES EXPORT_NAME assembler)
@@ -79,8 +69,6 @@ if (INSTALL_AL)
             al-assembler
             al-compiler
             al-linker
-            al-linker-exe
-            al-linker-dll
         EXPORT
             al-targets
     )
