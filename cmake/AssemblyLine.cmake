@@ -555,14 +555,11 @@ endmacro()
 # External
 ##############################################################################
 if (AL_PHNT)
-    set(phnt_TAG "v1.2-4d1b102f")
+    set(phnt_TAG "v1.4-ed73b907")
     message(STATUS "Fetching phnt (${phnt_TAG})...")
-    FetchContent_Declare(
-        phnt
-        URL
-            "https://github.com/mrexodia/phnt-single-header/releases/download/${phnt_TAG}/phnt.zip"
-        URL_HASH
-            "SHA256=ac86517816cec0a38ba7ff1fff49735ce143b45542118376d71c522fdb75c0c7"
+    FetchContent_Declare(phnt
+        URL "https://github.com/mrexodia/phnt-single-header/releases/download/${phnt_TAG}/phnt.zip"
+        URL_HASH "SHA256=a41def8d91204dc8c1d322a9d20b5fa107f99138ed0ad8bf52d6353137000dd5"
     )
     FetchContent_MakeAvailable(phnt)
 
