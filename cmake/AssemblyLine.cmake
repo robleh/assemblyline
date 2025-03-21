@@ -87,7 +87,6 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
             /Zl                                # No default lib name in obj
             /Oi                                # Enable intrinsics
             /Zc:preprocessor                   # Enable VA_OPT for macros
-            /Fa${CMAKE_CURRENT_BINARY_DIR}\\   # Generate assembly listing
         )
     endif()
 
