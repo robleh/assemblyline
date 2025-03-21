@@ -351,9 +351,9 @@ file(
         ${AL_TOOLCHAIN_DIR}/$<CONFIG>/linker-options
     CONTENT
         "$<JOIN:\
-        ${AL_EXE_LINKER_FLAGS}\
-        $<$<CONFIG:Debug>:${AL_EXE_LINKER_FLAGS_DEBUG}>\
-        $<$<CONFIG:Release>:${AL_EXE_LINKER_FLAGS_RELEASE}>\
+${AL_EXE_LINKER_FLAGS} \
+$<$<CONFIG:Debug>:${AL_EXE_LINKER_FLAGS_DEBUG}>
+$<$<CONFIG:Release>:${AL_EXE_LINKER_FLAGS_RELEASE}>
         , >"
 )
 
