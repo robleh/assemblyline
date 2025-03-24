@@ -1,4 +1,4 @@
-// c-compat tests whether C programs can link to al.lib using the core interface
+// Test whether extern C interface can be consumed from C
 #include <al/al.hpp>
 
 #define EXIT_SUCCESS 0

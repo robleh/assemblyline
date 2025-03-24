@@ -1,1 +1,1 @@
-add_pic_executable(c-compat entry.c)
+add_pic_executable(c entry.c)
