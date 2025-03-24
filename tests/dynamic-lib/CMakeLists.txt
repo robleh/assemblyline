@@ -1,1 +1,0 @@
-add_pic_library(al-test-dll SHARED test.cpp)
