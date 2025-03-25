@@ -1,5 +1,12 @@
 add_executable(crt-runner main.cpp)
-target_link_libraries(crt-runner PRIVATE al-test-lib)
+target_link_libraries(crt-runner PRIVATE al-test-lib al-test-lib-dll)
+
+add_custom_command(
+    TARGET crt-runner
+    POST_BUILD
+    COMMAND
+        ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:crt-runner> $<TARGET_RUNTIME_DLLS:crt-runner>
+)
 
 # Static Lib should contain a log message function that takes a parameter
 # DLL should link to static lib and log "dll log success"
