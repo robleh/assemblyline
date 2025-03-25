@@ -40,8 +40,9 @@ if (AL_C)
     add_subdirectory("c")
 endif()
 
+add_subdirectory("position-independence")
 add_subdirectory("stub-module")
-add_subdirectory("linking")
+add_subdirectory("link")
 gtest_discover_tests(al-test)
 
 if (INSTALL_AL)
