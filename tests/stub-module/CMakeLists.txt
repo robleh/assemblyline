@@ -1,1 +1,0 @@
-add_library(stub-module SHARED main.cpp)
