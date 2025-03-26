@@ -4,5 +4,5 @@
 struct PositionIndependenceTest : PICTest<> {};
 
 TEST_F(PositionIndependenceTest, PICStable) {
-    ASSERT_NO_THROW(pic());
+    EXPECT_EQ(EXIT_SUCCESS, pic());
 }
