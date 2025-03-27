@@ -13,7 +13,7 @@ constexpr unsigned long ror13(std::wstring_view str) noexcept {
         0,
         [](unsigned long hash, unsigned long c) {
             c = (c >= 97 && c <= 122) ? c - 32 : c;
-            return ((hash >> 13) | (hash << 19) + c);
+            return ((hash >> 13) | (hash << 19)) + c;
         }
     );
 }
@@ -25,7 +25,7 @@ constexpr unsigned long ror13(std::string_view str) noexcept {
         0,
         [](unsigned long hash, unsigned long c) {
             c = (c >= 97 && c <= 122) ? c - 32 : c;
-            return ((hash >> 13) | (hash << 19) + c);
+            return ((hash >> 13) | (hash << 19)) + c;
         }
     );
 }
