@@ -41,7 +41,6 @@ if (AL_C)
 endif()
 
 add_subdirectory("position-independence")
-add_subdirectory("stub-module")
 add_subdirectory("link")
 gtest_discover_tests(al-test)
 
