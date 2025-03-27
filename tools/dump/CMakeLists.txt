@@ -1,8 +1,12 @@
 add_executable(al-dump "main.cpp")
 add_executable(al::dump ALIAS al-dump)
 
-set_target_properties(al-dump PROPERTIES OUTPUT_NAME dump)
-set_target_properties(al-dump PROPERTIES EXPORT_NAME dump)
+set_target_properties(
+    al-dump
+    PROPERTIES
+        OUTPUT_NAME dump
+        EXPORT_NAME dump
+)
 
 if (INSTALL_AL)
     install(
@@ -14,7 +18,8 @@ if (INSTALL_AL)
             ${CMAKE_INSTALL_BINDIR}
     )
 
-    if (NOT ${CMAKE_CXX_COMPILER_LINKER_ID} STREQUAL GNU)
+    # Don't attempt to install PDB files when using GCC
+    if (${CMAKE_CXX_LINKER_SUPPORTS_PDB})
         install(
             FILES
                 $<TARGET_PDB_FILE:al-dump>
