@@ -3,13 +3,7 @@ add_subdirectory("intrinsic")
 
 add_library(al STATIC)
 add_library(al::al ALIAS al)
-
-set_target_properties(
-    al
-    PROPERTIES
-        EXPORT_NAME al
-        EXPORT_COMPILE_COMMANDS ON
-)
+set_target_properties(al PROPERTIES EXPORT_NAME al)
 
 target_link_libraries(al PRIVATE al::compiler)
 

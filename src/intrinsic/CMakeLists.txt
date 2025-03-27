@@ -1,12 +1,6 @@
 add_library(al-intrinsic STATIC)
 add_library(al::intrinsic ALIAS al-intrinsic)
-
-set_target_properties(
-    al-intrinsic
-    PROPERTIES
-        EXPORT_NAME intrinsic
-        EXPORT_COMPILE_COMMANDS ON
-)
+set_target_properties(al-intrinsic PROPERTIES EXPORT_NAME intrinsic)
 
 target_sources(
     al-intrinsic
