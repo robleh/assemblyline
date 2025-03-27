@@ -17,7 +17,7 @@ constexpr unsigned long ror13(const auto* str) {
     unsigned long hash = 0;
     for (size_t i = 0; str[i] != 0; ++i) {
         auto c = (str[i] >= 97 && str[i] <= 122) ? str[i] - 32 : str[i];
-        hash = ((hash >> 13) | (hash << 19) + c);
+        hash = ((hash >> 13) | (hash << 19)) + c;
     }
     return hash;
 }
