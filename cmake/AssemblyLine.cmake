@@ -211,7 +211,7 @@ if (${CMAKE_CXX_COMPILER_LINKER_ID} STREQUAL MSVC)
 
     if (NOT DEFINED AL_EXE_LINKER_FLAGS_DEBUG)
         set(
-            AL_CXX_FLAGS_DEBUG
+            AL_EXE_LINKER_FLAGS_DEBUG
             /debug
             /opt:ref
         )
@@ -445,7 +445,6 @@ function(al_dump_target name)
 endfunction()
 
 function(al_configure_target name)
-    set_target_properties(${name} PROPERTIES EXPORT_COMPILE_COMMANDS ON)
     target_link_libraries(${name} PRIVATE al::al al::compiler)
 
     get_target_property(target_type ${name} TYPE)
