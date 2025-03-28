@@ -4,3 +4,4 @@ build/
 external/
 CMakeUserPresets.json
 TODO.md
+vc140.pdb
