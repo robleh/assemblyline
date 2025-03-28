@@ -1,3 +1,4 @@
+// MessageBox PIC that prompts the user
 #include "messagebox.hpp"
 #include <al/al.hpp>
 #include <windows.h>
