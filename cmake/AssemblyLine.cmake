@@ -297,7 +297,8 @@ elseif (${CMAKE_CXX_COMPILER_LINKER_ID} STREQUAL GNU)
             AL_EXE_LINKER_FLAGS
             -M
             --entry=${AL_ENTRY}
-            -T${AL_TOOLCHAIN_DIR}/$<CONFIG>/script.ld
+            -L${PROJECT_SOURCE_DIR}/tools/ld
+            -T${PROJECT_SOURCE_DIR}/tools/ld/main.ld
             --no-seh
         )
     endif()
@@ -320,31 +321,9 @@ elseif (${CMAKE_CXX_COMPILER_LINKER_ID} STREQUAL GNU)
             -nostdlib
             $<$<STREQUAL:EXECUTABLE,$<TARGET_PROPERTY:TYPE>>:--entry=${AL_ENTRY}>
             $<$<STREQUAL:SHARED_LIBRARY,$<TARGET_PROPERTY:TYPE>>:--no-entry>
-            ${AL_EXE_LINKER_FLAGS}
-            $<$<CONFIG:Debug>:${AL_EXE_LINKER_FLAGS_DEBUG}>
-            $<$<CONFIG:Release>:${AL_EXE_LINKER_FLAGS_RELEASE}>
-    )
-
-    file(
-        GENERATE
-        OUTPUT
-            ${AL_TOOLCHAIN_DIR}/$<CONFIG>/script.ld
-        CONTENT
-"SECTIONS\n
-{\n
-  . = SIZEOF_HEADERS;\n
-  . = ALIGN(__section_alignment__);\n
-  .pic  __image_base__ + ( __section_alignment__ < 0x1000 ? . : __section_alignment__ ) :\n
-  {\n
-    *(.al$*)\n
-    *(.rdata)\n
-    *(SORT(.rdata$*))\n
-    *(.data)\n
-    *(SORT(.data$*))\n
-    *(.text)\n
-    *(SORT(.text$*))\n
-  }\n
-}"
+            LINKER:$<JOIN:${AL_EXE_LINKER_FLAGS},,>
+            $<$<CONFIG:Debug>:LINKER:$<JOIN:${AL_EXE_LINKER_FLAGS_DEBUG},,>>
+            $<$<CONFIG:Release>:LINKER:$<JOIN:${AL_EXE_LINKER_FLAGS_RELEASE},,>>
 )
 
 else()
