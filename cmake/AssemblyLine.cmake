@@ -360,9 +360,9 @@ if (DEFINED ${CMAKE_ASM_MASM_COMPILER_ID} AND ${CMAKE_ASM_MASM_COMPILER_ID} STRE
     target_compile_options(
         al-assembler
         INTERFACE
-            ${AL_ASM_MASM_LINKER_FLAGS}
-            $<$<CONFIG:Debug>:${AL_ASM_MASM_LINKER_FLAGS_DEBUG}>
-            $<$<CONFIG:Release>:${AL_ASM_MASM_LINKER_FLAGS_RELEASE}>
+            ${AL_ASM_MASM_FLAGS}
+            $<$<CONFIG:Debug>:${AL_ASM_MASM_FLAGS_DEBUG}>
+            $<$<CONFIG:Release>:${AL_ASM_MASM_FLAGS_RELEASE}>
     )
 
 # Off brand MASM compatible compilers don't have compiler ID defined.
@@ -383,7 +383,7 @@ elseif (NOT DEFINED ${CMAKE_ASM_MASM_COMPILER_ID})
 
         if (NOT DEFINED AL_ASM_MASM_FLAGS_RELEASE)
             set(
-                AL_ASM_MASM_LINKER_FLAGS_RELEASE
+                AL_ASM_MASM_FLAGS_RELEASE
             )
         endif()
     endif()
@@ -391,9 +391,9 @@ elseif (NOT DEFINED ${CMAKE_ASM_MASM_COMPILER_ID})
     target_compile_options(
         al-assembler
         INTERFACE
-            ${AL_ASM_MASM_LINKER_FLAGS}
-            $<$<CONFIG:Debug>:${AL_ASM_MASM_LINKER_FLAGS_DEBUG}>
-            $<$<CONFIG:Release>:${AL_ASM_MASM_LINKER_FLAGS_RELEASE}>
+            ${AL_ASM_MASM_FLAGS}
+            $<$<CONFIG:Debug>:${AL_ASM_MASM_FLAGS_DEBUG}>
+            $<$<CONFIG:Release>:${AL_ASM_MASM_FLAGS_RELEASE}>
     )
 
 else()
