@@ -1,14 +1,5 @@
 SECTIONS
 {
-  . = SIZEOF_HEADERS;
-  . = ALIGN(__section_alignment__);
-  .pic  __image_base__ + ( __section_alignment__ < 0x1000 ? . : __section_alignment__ ) :
-  {
-    *(.al$*)
-    @AL_LD_SCRIPT_CONTENT@
-    *(.text)
-    *(SORT(.text$*))
-  }
   /* DWARF debug sections.
      Symbols in the DWARF debugging sections are relative to the beginning
      of the section.  Unlike other targets that fake this by putting the
