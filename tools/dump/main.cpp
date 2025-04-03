@@ -6,9 +6,9 @@
 #include <string_view>
 #include <span>
 #include <bit>
-#include <Windows.h>
+#include <windows.h>
 
-std::vector<std::byte> aread_file(const std::filesystem::path& path) {
+std::vector<std::byte> read_file(const std::filesystem::path& path) {
     std::basic_ifstream<std::byte> file{ path, std::ios::binary };
 
     // ~basic_ifstream() closes the file handle
@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
     }
 
     auto input = std::filesystem::absolute(argv[1]);
-    auto pe = aread_file(input);
+    auto pe = read_file(input);
     auto [pic, virtual_offset] = get_pic_section(pe);
     auto output = input.replace_extension(input.extension().string() + ".pic");
 
