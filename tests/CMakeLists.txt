@@ -33,10 +33,7 @@ add_executable(al::test ALIAS al-test)
 target_link_libraries(al-test PRIVATE GTest::gtest_main al::gtest al::al)
 target_include_directories(al-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# add_subdirectory("imports")
-# add_subdirectory("strings")
-
-if (AL_C)
+if (AL_TEST_C)
     add_subdirectory("c")
 endif()
 
