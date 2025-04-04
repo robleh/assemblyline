@@ -8,10 +8,13 @@ option(AL_PATCH_ENTRY "Patch start of PIC with jump to entry" OFF)
 option(AL_ASM "Use assembler for core Assemblyline functions" ON)
 option(AL_C "Enable C support for tests" ON)
 option(AL_TESTS "Build Assembly Line unit tests" ON)
+option(AL_TEST_C "Test C support" ON)
+option(AL_TEST_POSITION_INDEPENDENCE "Test Assembly Line position independence" ON)
+option(AL_TEST_LINKAGE "Test PIC library linkage" ON)
 option(AL_EXAMPLES "Build Assembly Line examples" OFF)
-option(AL_PHNT "Make https://github.com/mrexodia/phnt-single-headers available" OFF)
 option(AL_MESSAGEBOX_EXAMPLE "Build Assembly Line messagebox example" ${AL_EXAMPLES})
 option(AL_CREATEPROCESS_EXAMPLE "Build Assembly Line createprocess example" ${AL_EXAMPLES})
+option(AL_PHNT "Make https://github.com/mrexodia/phnt-single-headers available" OFF)
 
 # Entry function to be specified by the linker for executables.
 if(NOT DEFINED AL_ENTRY)
@@ -324,7 +327,7 @@ elseif (${CMAKE_CXX_COMPILER_LINKER_ID} STREQUAL GNU)
             LINKER:$<JOIN:${AL_EXE_LINKER_FLAGS},,>
             $<$<CONFIG:Debug>:LINKER:$<JOIN:${AL_EXE_LINKER_FLAGS_DEBUG},,>>
             $<$<CONFIG:Release>:LINKER:$<JOIN:${AL_EXE_LINKER_FLAGS_RELEASE},,>>
-)
+    )
 
 else()
     message(FATAL_ERROR "${CMAKE_CXX_COMPILER_ID} linker not supported")

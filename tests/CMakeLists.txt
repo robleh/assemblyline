@@ -40,8 +40,14 @@ if (AL_C)
     add_subdirectory("c")
 endif()
 
+if (AL_TEST_POSITION_INDEPENDENCE)
 add_subdirectory("position-independence")
-add_subdirectory("link")
+endif()
+
+if (AL_TEST_LINKAGE)
+    add_subdirectory("linkage")
+endif()
+
 gtest_discover_tests(al-test)
 
 if (INSTALL_AL)
