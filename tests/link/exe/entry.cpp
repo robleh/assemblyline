@@ -1,5 +1,5 @@
-#include "test.hpp"
 #include "exe.hpp"
+#include "lib.hpp"
 #include <al/al.hpp>
 
 AL_ENTRY int entry() {

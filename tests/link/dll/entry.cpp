@@ -1,5 +1,5 @@
 #include "dll.hpp"
-#include "test.hpp"
+#include "lib.hpp"
 #include <al/al.hpp>
 
 AL_ENTRY __declspec(dllexport) int dll_export() {

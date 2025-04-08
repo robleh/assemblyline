@@ -1,11 +1,11 @@
-add_executable(crt-runner main.cpp)
-target_link_libraries(crt-runner PRIVATE al-test-lib al-test-lib-dll)
+add_executable(al-test-runner main.cpp)
+target_link_libraries(al-test-runner PRIVATE al-test-lib al-test-dll)
 
 add_custom_command(
-    TARGET crt-runner
+    TARGET al-test-runner
     POST_BUILD
     COMMAND
-        ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:crt-runner> $<TARGET_RUNTIME_DLLS:crt-runner>
+        ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:al-test-runner> $<TARGET_RUNTIME_DLLS:al-test-runner>
 )
 
 # Static Lib should contain a log message function that takes a parameter

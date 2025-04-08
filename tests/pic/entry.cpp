@@ -1,4 +1,4 @@
-#include "position-independence.hpp"
+#include "pic.hpp"
 #include <al/al.hpp>
 #include <windows.h>
 
