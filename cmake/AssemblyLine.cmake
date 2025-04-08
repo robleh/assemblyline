@@ -1,25 +1,35 @@
 ##############################################################################
 # Options
 ##############################################################################
-option(INSTALL_AL "Install Assembly Line targets" OFF)
+# Build
 option(AL_MERGE_RDATA "Merge .rdata with code" ON)
 option(AL_MERGE_DATA "Merge .data data with code" OFF)
 option(AL_PATCH_ENTRY "Patch start of PIC with jump to entry" OFF)
 option(AL_ASM "Use assembler for core Assemblyline functions" ON)
-option(AL_C "Enable C support for tests" ON)
-option(AL_TESTS "Build Assembly Line unit tests" ON)
-option(AL_TEST_C "Test C support" ON)
-option(AL_TEST_POSITION_INDEPENDENCE "Test Assembly Line position independence" ON)
-option(AL_TEST_LINKAGE "Test PIC library linkage" ON)
-option(AL_EXAMPLES "Build Assembly Line examples" OFF)
-option(AL_MESSAGEBOX_EXAMPLE "Build Assembly Line messagebox example" ${AL_EXAMPLES})
-option(AL_CREATEPROCESS_EXAMPLE "Build Assembly Line createprocess example" ${AL_EXAMPLES})
-option(AL_PHNT "Make https://github.com/mrexodia/phnt-single-headers available" OFF)
 
 # Entry function to be specified by the linker for executables.
 if(NOT DEFINED AL_ENTRY)
     set(AL_ENTRY entry)
 endif()
+
+# Test
+option(AL_TESTS "Build Assembly Line tests" ON)
+option(AL_TEST_C "Test C support" ${AL_TESTS})
+option(AL_TEST_PIC "Test Assembly Line position independence" ${AL_TESTS})
+option(AL_TEST_LINK "Test PIC library linkage" ${AL_TESTS})
+
+# Install
+option(INSTALL_AL "Install Assembly Line targets" OFF)
+
+# Examples
+option(AL_EXAMPLES "Build Assembly Line examples" OFF)
+option(AL_EXAMPLE_MESSAGEBOX "Build Assembly Line messagebox example" ${AL_EXAMPLES})
+option(AL_EXAMPLE_CREATEPROCESS "Build Assembly Line createprocess example" ${AL_EXAMPLES})
+option(AL_EXAMPLES_TEST "Enable example tests" ${AL_EXAMPLES})
+
+# External
+option(AL_GTEST "Make GoogleTest available" ON)
+option(AL_PHNT "Make https://github.com/mrexodia/phnt-single-headers available" OFF)
 
 ##############################################################################
 # Toolchain Option Interfaces
