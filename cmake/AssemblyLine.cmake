@@ -119,6 +119,7 @@ elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
             --target=amd64-pc-windows-msvc
             -fdiagnostics-absolute-paths
             -fno-stack-protector
+            -fno-exceptions
             -nodefaultlibs
         )
     endif()
