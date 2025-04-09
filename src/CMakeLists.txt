@@ -35,12 +35,16 @@ target_sources(
             ${PROJECT_SOURCE_DIR}/include/al/al.hpp
 )
 
-target_sources(
-    al-test
-    PRIVATE
-        import_test.cpp
-        hash_test.cpp
-)
+if (AL_GTEST)
+    target_link_libraries(al-test PRIVATE al)
+
+    target_sources(
+        al-test
+        PRIVATE
+            import_test.cpp
+            hash_test.cpp
+    )
+endif()
 
 if (INSTALL_AL)
     install(

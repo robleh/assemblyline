@@ -1,8 +1,9 @@
 #include "messagebox.hpp"
-#include "pic.hpp"
+#include <gtest/gtest.h>
+#include <windows.h>
+import run;
 
-struct MessageBoxTest : PICTest<> {};
-
-TEST_F(MessageBoxTest, PositionIndependent) {
+TEST(MessageBoxTest, PositionIndependent) {
+    al::tools::run<messagebox_t> pic(MESSAGEBOX_PIC_PATH);
     EXPECT_EQ(IDOK, pic());
 }

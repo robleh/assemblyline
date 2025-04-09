@@ -1,9 +1,9 @@
 #include "createprocess.hpp"
-#include "pic.hpp"
+#include <gtest/gtest.h>
+import run;
 
-struct CreateProcessTest : PICTest<> {};
-
-TEST_F(CreateProcessTest, PositionIndependent) {
-    wchar_t calc[](L"calc.exe");
-    EXPECT_TRUE(pic(calc));
+TEST(CreateProcessTest, PositionIndependent) {
+    al::tools::run<createprocess_t> pic(CREATEPROCESS_PIC_PATH);
+    wchar_t cmd[](L"calc.exe");
+    EXPECT_TRUE(pic(cmd));
 }

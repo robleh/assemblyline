@@ -1,4 +1,4 @@
 #pragma once
 
-extern "C" unsigned int entry();
+extern "C" __declspec(dllexport) unsigned int entry();
 using messagebox_t = decltype(&entry);

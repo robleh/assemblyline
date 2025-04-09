@@ -16,10 +16,9 @@ AL_ENTRY unsigned int entry(wchar_t* cmd) {
 
     STARTUPINFOW startup{};
     PROCESS_INFORMATION info{};
-    wchar_t calc[] = L"calc.exe";
     return CreateProcessW_(
         nullptr,
-        calc,
+        cmd,
         nullptr,
         nullptr,
         false,
