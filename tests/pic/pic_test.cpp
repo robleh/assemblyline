@@ -3,6 +3,6 @@
 import run;
 
 TEST(PositionIndependenceTest, PICStable) {
-    al::tools::run<decltype(&entry)> pic(POSITION_INDEPENDENCE_PIC_PATH);
+    al::tools::run<decltype(&entry)> pic(PIC_PIC_PATH);
     EXPECT_EQ(EXIT_SUCCESS, pic());
 }
