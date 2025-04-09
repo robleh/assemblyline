@@ -327,6 +327,8 @@ elseif (${CMAKE_CXX_COMPILER_LINKER_ID} STREQUAL GNU)
         )
     endif()
 
+    # CMake passes ld options via g++ using the -Wl, flag. In order to 
+    # properly prefix our parameters the LINKER: modifier must be specified.
     target_link_options(
         al-linker
         BEFORE
@@ -421,19 +423,40 @@ function(al_dump_target name)
     get_target_property(target_type ${name} TYPE)
 
     # Only dump executable types
-    if(NOT target_type STREQUAL "STATIC_LIBRARY")
-        add_custom_command(
-            TARGET
-                ${name}
-            POST_BUILD
-            COMMAND
-                al::dump "$<TARGET_FILE:${name}>" $<$<BOOL:${AL_PATCH_ENTRY}>:patch_entry>
-            WORKING_DIRECTORY
-                "$<TARGET_FILE_DIR:${name}>"
-            COMMENT
-                "Assembly Line: Dumping PIC section from $<TARGET_FILE:${name}>"
-        )
+    if(target_type STREQUAL "STATIC_LIBRARY")
+        return()
     endif()
+
+    add_custom_command(
+        TARGET
+            ${name}
+        POST_BUILD
+        COMMAND
+            al::dump "$<TARGET_FILE:${name}>" $<$<BOOL:${AL_PATCH_ENTRY}>:patch_entry>
+        WORKING_DIRECTORY
+            "$<TARGET_FILE_DIR:${name}>"
+        COMMENT
+            "Assembly Line: Dumping PIC section from $<TARGET_FILE:${name}>"
+    )
+
+    add_library(${name}.pic INTERFACE)
+    add_dependencies(${name}.pic ${name})
+
+    target_include_directories(
+        ${name}.pic
+        INTERFACE
+            ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+
+    string(TOUPPER ${name} PREFIX)
+    string(REPLACE "-" "_" PREFIX ${PREFIX})
+
+    target_compile_definitions(
+        ${name}.pic
+        INTERFACE
+            ${PREFIX}_EXE_PATH=L"$<TARGET_FILE:${name}>"
+            ${PREFIX}_PIC_PATH=L"$<TARGET_FILE:${name}>.pic"
+    )
 endfunction()
 
 function(al_configure_target name)
@@ -540,6 +563,22 @@ endmacro()
 ##############################################################################
 # External
 ##############################################################################
+if(AL_GTEST)
+    include(FetchContent)
+    FetchContent_Declare(
+      googletest
+      URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+    )
+    # For Windows: Prevent overriding the parent project's compiler/linker settings
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+    # Don't install GTest alongside Assembly Line
+    set(INSTALL_GTEST OFF)
+
+    FetchContent_MakeAvailable(googletest)
+    include(GoogleTest)
+endif()
+
 if (AL_PHNT)
     set(phnt_TAG "v1.4-ed73b907")
     message(STATUS "Fetching phnt (${phnt_TAG})...")
